@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: insurance-postgres
+    environment:
+      POSTGRES_USER: insurance
+      POSTGRES_PASSWORD: insurance
+      POSTGRES_DB: insurance
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insurance"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: ./app
+    container_name: insurance-agent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://insurance:insurance@postgres:5432/insurance
+      # 컨테이너에서 호스트의 Ollama 로 접근 (Docker Desktop: host.docker.internal)
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+    # Linux 에서도 host.docker.internal 이 호스트를 가리키도록 매핑
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./app:/app
+    # 대화형 CLI: `docker compose run --rm app` 로 실행
+    stdin_open: true
+    tty: true
+
+  # 외부에서 접속하는 웹 UI: `docker compose up -d web` → http://<호스트IP>:8000
+  web:
+    build: ./app
+    container_name: insurance-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://insurance:insurance@postgres:5432/insurance
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./app:/app
+    # 0.0.0.0 바인딩 → 호스트의 모든 인터페이스로 노출(외부 접속 허용)
+    ports:
+      - "8000:8000"
+    command: uvicorn web:app --host 0.0.0.0 --port 8000
+
+volumes:
+  pgdata:
