@@ -1,6 +1,12 @@
 {
+  "id": null,
   "uid": "spring-was",
   "title": "Spring - WAS (spring1 / spring2)",
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "annotations": { "list": [] },
+  "templating": { "list": [] },
   "tags": ["spring"],
   "timezone": "browser",
   "schemaVersion": 39,

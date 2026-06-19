@@ -1,6 +1,12 @@
 {
+  "id": null,
   "uid": "rabbitmq-agent",
   "title": "RabbitMQ - Agent 파이프라인",
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "annotations": { "list": [] },
+  "templating": { "list": [] },
   "tags": ["rabbitmq"],
   "timezone": "browser",
   "schemaVersion": 39,

@@ -12,6 +12,7 @@
 """
 
 import json
+import re
 import uuid
 
 import pika
@@ -20,8 +21,53 @@ from langchain_core.messages import AIMessage, HumanMessage
 from agent import build_agent
 from config import settings
 from history import clear_history, load_history, save_history
+from tools import TOOLS
 # web.py 에 있던 유니코드 방어 로직을 그대로 재사용
 from main import _sanitize_messages, _strip_surrogates
+
+# 응답에 새어나오면 안 되는 tool/함수 이름(코드와 항상 동기화, 긴 이름부터 매칭)
+_TOOL_NAMES = sorted((t.name for t in TOOLS), key=len, reverse=True)
+_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+_INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+_BRACE_RE = re.compile(r"\{[^{}]*\}")
+_BRACKET_RE = re.compile(r"\[[^\[\]]*\]")
+# 함수명 뒤에 흔히 붙는 한국어 조사까지 함께 제거(잔여 어색함 최소화)
+_JOSA = "(을|를|이|가|은|는|로|으로|에|에서|와|과|의)?"
+
+
+def _strip_json_blocks(text: str) -> str:
+    """문장 안에 박힌 JSON 객체/배열 원문만 인라인으로 제거한다(중첩 포함, 일반 문장은 보존)."""
+    prev = None
+    while prev != text:  # 가장 안쪽 {...} 부터 반복 제거 → 중첩 JSON 처리
+        prev = text
+        text = _BRACE_RE.sub(
+            lambda m: "" if ('"' in m.group() or ":" in m.group()) else m.group(), text
+        )
+    prev = None
+    while prev != text:  # 따옴표가 든 [...] 배열 제거(일반 대괄호는 보존)
+        prev = text
+        text = _BRACKET_RE.sub(lambda m: "" if '"' in m.group() else m.group(), text)
+    return text
+
+
+def _sanitize_reply(text: str) -> str:
+    """LLM 최종 응답에서 함수명·JSON 원문 노출을 결정적으로 제거한다.
+
+    프롬프트만으로는 소형 모델이 반복적으로 흘리므로, 사용자에게 보내기 직전 한 번 더 거른다.
+    """
+    if not text:
+        return text
+    text = _FENCE_RE.sub("", text)              # 코드펜스 블록 제거
+    text = _strip_json_blocks(text)             # 인라인 JSON 제거(프로즈 보존)
+    text = _INLINE_CODE_RE.sub("", text)        # 인라인 백틱 코드 제거
+    for name in _TOOL_NAMES:                    # 함수명(+조사) 제거
+        text = re.sub(rf"\s*\b{re.escape(name)}\b\s*{_JOSA}\s*", " ", text)
+    # 순수 구조 줄/빈 줄/공백 정리
+    text = "\n".join(ln for ln in text.splitlines() if ln.strip() not in "{}[]")
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"\s+([,.!?])", r"\1", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 # DLX (agent.dlx) = 죽은 메시지를 받는 교환기(라우터). "거부된 메시지는 여기로 보내라"의 목적지 주소 역할.
 # DLQ (agent.requests.dlq) = 그 메시지가 실제로 쌓이는 큐(저장소).
@@ -79,7 +125,11 @@ def _handle(data: dict) -> dict:
     save_history(session_id, messages)
 
     last = messages[-1]
-    reply = last.content if isinstance(last, AIMessage) else ""
+    raw_reply = last.content if isinstance(last, AIMessage) else ""
+    reply = _sanitize_reply(raw_reply)
+    # 필터로 내용이 모두 사라지면(예: 응답이 통째로 JSON이었던 경우) 중립 문구로 대체
+    if raw_reply and not reply:
+        reply = "요청을 처리했습니다. 추가로 도와드릴 내용이 있을까요?"
     return {"ok": True, "session_id": session_id, "reply": reply}
 
 
