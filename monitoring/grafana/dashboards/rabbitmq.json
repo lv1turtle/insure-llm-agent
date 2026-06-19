@@ -1,0 +1,59 @@
+{
+  "uid": "rabbitmq-agent",
+  "title": "RabbitMQ - Agent 파이프라인",
+  "tags": ["rabbitmq"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "큐에 쌓인 메시지 (ready) — 큐별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "rabbitmq_queue_messages_ready", "legendFormat": "{{queue}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "처리 중(unacked) 메시지 — 큐별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "rabbitmq_queue_messages_unacked", "legendFormat": "{{queue}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "연결 수 (connections)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+      "targets": [ { "expr": "rabbitmq_connections", "refId": "A" } ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "소비자 수 (consumers)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+      "targets": [ { "expr": "rabbitmq_consumers", "refId": "A" } ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "메시지 처리율 (publish / deliver, msg/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "rate(rabbitmq_global_messages_received_confirm_total[1m])", "legendFormat": "published", "refId": "A" },
+        { "expr": "rate(rabbitmq_global_messages_delivered_total[1m])", "legendFormat": "delivered", "refId": "B" }
+      ]
+    }
+  ]
+}

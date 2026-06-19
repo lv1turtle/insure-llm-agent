@@ -1,0 +1,53 @@
+{
+  "uid": "nginx-lb",
+  "title": "nginx - 로드밸런서",
+  "tags": ["nginx"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "현재 활성 연결 (active)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [ { "expr": "nginx_connections_active", "refId": "A" } ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "연결 상태 (reading / writing / waiting)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 18, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "nginx_connections_reading", "legendFormat": "reading", "refId": "A" },
+        { "expr": "nginx_connections_writing", "legendFormat": "writing", "refId": "B" },
+        { "expr": "nginx_connections_waiting", "legendFormat": "waiting", "refId": "C" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "요청 처리율 (req/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "rate(nginx_http_requests_total[1m])", "legendFormat": "requests", "refId": "A" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "수락/처리된 연결 (accepted / handled, /s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        { "expr": "rate(nginx_connections_accepted[1m])", "legendFormat": "accepted", "refId": "A" },
+        { "expr": "rate(nginx_connections_handled[1m])", "legendFormat": "handled", "refId": "B" }
+      ]
+    }
+  ]
+}
