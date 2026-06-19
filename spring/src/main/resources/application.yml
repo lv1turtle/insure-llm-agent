@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
+app:
+  instance-id: ${INSTANCE_ID:spring}
+
+# Actuator: 헬스 + Prometheus 지표 엔드포인트 노출
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      # Prometheus 의 instance 라벨(spring1:8080/spring2:8080)과 충돌 피하려 application 태그 사용
+      application: insurance-gateway

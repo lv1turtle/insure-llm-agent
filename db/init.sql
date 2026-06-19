@@ -175,3 +175,16 @@ INSERT INTO policy_riders (policy_id, rider_id, monthly_premium)
 SELECT np.id, r.id, r.monthly_premium
 FROM np, riders r
 WHERE r.code = 'R_HOSPITAL';
+
+-- ---------- 대화 히스토리 (영속 세션) ----------
+-- worker 가 session_id 별로 LangChain 메시지를 직렬화해 저장/복원한다.
+-- messages_to_dict() 결과(JSON)를 message 컬럼에 한 메시지당 한 행으로 보관.
+CREATE TABLE conversations (
+    id          BIGSERIAL PRIMARY KEY,
+    session_id  TEXT        NOT NULL,
+    seq         INT         NOT NULL,         -- 세션 내 메시지 순서
+    message     JSONB       NOT NULL,         -- messages_to_dict() 단일 항목
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (session_id, seq)
+);
+CREATE INDEX idx_conversations_session ON conversations (session_id, seq);

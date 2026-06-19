@@ -1,0 +1,52 @@
+{
+  "uid": "spring-was",
+  "title": "Spring - WAS (spring1 / spring2)",
+  "tags": ["spring"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "활성 WebSocket 세션 수 — 인스턴스별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "websocket_sessions_active", "legendFormat": "{{instance}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP 요청 처리율 (req/s) — 인스턴스별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum by (instance) (rate(http_server_requests_seconds_count[1m]))", "legendFormat": "{{instance}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "JVM 힙 사용량 (bytes) — 인스턴스별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "sum by (instance) (jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "{{instance}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "프로세스 CPU 사용률 — 인스턴스별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "process_cpu_usage", "legendFormat": "{{instance}}", "refId": "A" }
+      ]
+    }
+  ]
+}
