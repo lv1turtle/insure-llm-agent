@@ -4,5 +4,10 @@ providers:
   - name: default
     type: file
     folder: ''
+    # 마운트가 일시적으로 비어 보여도 기존 대시보드를 삭제하지 않음(동기화 사고 방지)
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

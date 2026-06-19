@@ -1,6 +1,12 @@
 {
+  "id": null,
   "uid": "nginx-lb",
   "title": "nginx - 로드밸런서",
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "annotations": { "list": [] },
+  "templating": { "list": [] },
   "tags": ["nginx"],
   "timezone": "browser",
   "schemaVersion": 39,
